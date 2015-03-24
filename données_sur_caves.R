@@ -65,23 +65,93 @@ histoeff(cuve1)
 histoeff(cuve2)
 histoeff(cuve3)
 
+# Valeurs pour Y = ln (X/2)
+
+y_cuve1 <- log(cuve1[1:29]/2)
+y_cuve2 <- log(cuve2[1:24]/2)
+y_cuve3 <- log(cuve3[1:27]/2)
+
 # Graphe de probabilité et droite des moindres carrés
 
 # Cuve 1  =>  pas de valeurs abherrante
+# donc on se permet de calculer le coeff a
+# avec la R.G | on compare avec une autre méthode
+# de calcul qui consiste à calculer 1/moyenne(ln(x/2))
+# puisqu'on sait que pour la loi exponentielle,
+# X(barre)n est un estimateur sans biais de E[X]
+# et que E[X] vaut 1/a pour une loi exp(a):
+
 plot(log(sort(cuve1)[1:29]),log(1-seq(1:29)/30))
 abs1 <- log(sort(cuve1))[1:29]
 ord1 <- log(1-seq(1:29)/30)
 reg1 <- lm(ord1~abs1)
 lines(abs1, fitted.values(reg1))
+a_obtenu_pour_cave1_par_RG <- -reg1$coefficients[2]
+
+a_obtenu_par_moyenne_pour_cave1 <- 1/mean(y_cuve1)
+
+a_obtenu_pour_cave1_par_RG
+a_obtenu_par_moyenne_pour_cave1
+# L'ecart relatif est très faible; il est de l'ordre de 2% :
+ecart_relatif_a1 <- abs((a_obtenu_pour_cave1_par_RG - a_obtenu_par_moyenne_pour_cave1)/a_obtenu_par_moyenne_pour_cave1)*100
+ecart_relatif_a1
+
 # Cuve 2  =>  il y a une valeur abherrante
+# de la meme manière on se permet de calculer
+# le coeff a avec la R.G | on compare avec l'évaluation
+# par 1/moyenne(ln(x/2))
+
 plot(log(sort(cuve2)[1:24]),log(1-seq(1:24)/25))
 abs2 <- log(sort(cuve2))[1:24]
 ord2<- log(1-seq(1:24)/25)
 reg2 <- lm(ord2~abs2)
 lines(abs2, fitted.values(reg2))
-# Cuve 3  =>  on s'écarte plus du modèle 
+a_obtenu_pour_cave2_par_RG <- -reg2$coefficients[2]
+
+a_obtenu_par_moyenne_pour_cave2 <- 1/mean(y_cuve2)
+
+a_obtenu_pour_cave2_par_RG
+a_obtenu_par_moyenne_pour_cave2
+# L'ecart relatif est très faible; il est de l'ordre de moins de 1% :
+ecart_relatif_a2 <- abs((a_obtenu_pour_cave2_par_RG - a_obtenu_par_moyenne_pour_cave2)/a_obtenu_par_moyenne_pour_cave2)*100
+ecart_relatif_a2
+
+# Cuve 3
+
 plot(log(sort(cuve3)[1:27]),log(1-seq(1:27)/28))
 abs3 <- log(sort(cuve3))[1:27]
 ord3 <- log(1-seq(1:27)/28)
 reg3 <- lm(ord3~abs3)
 lines(abs3, fitted.values(reg3))
+
+#  =>  on s'écarte plus du modèle DONC on va
+# chercher avec une loi qui se rapproche plus du modèle
+# ici, on peut poser l'hypothèse de la loi normale
+# N(m,sigma²):
+
+plot(sort(cuve3)[1:27],qnorm(seq(1:27)/28))
+abs3_normale <- sort(cuve3)[1:27]
+ord3_normale <- qnorm(seq(1:27)/28)
+reg3_normale <- lm(ord3_normale~abs3_normale)
+lines(abs3_normale, fitted.values(reg3_normale))
+
+# Estimation de m et sigma^2 par moments ou maximum de 
+# vraisemblance
+m_exp<-mean(cuve3)
+m_exp
+sigma_carre_exp<-var(cuve3)
+sigma_carre_exp
+
+# Estimation de m et sigma^2 par le graphe de probabilités
+reg3_normale <- lm(qnorm(seq(1:(ncuve3-1))/ncuve3)~cuve3[1:(ncuve3-1)])
+sigma_carre_theorique <- (1/reg3_normale$coefficients[2])^2
+sigma_carre_theorique
+m_theorique <- -reg3_normale$coefficients[1]/reg3_normale$coefficients[2]
+m_theorique
+
+# Avec ce modèle de loi normale, l'ecart relatif est très faible pour les deux
+# variables m et sigma² ; respectivement ~1% et ~3% :
+ecart_relatif_m <- abs((m_exp-m_theorique)/m_theorique)*100
+ecart_relatif_m
+ecart_relatif_sigma_carre <- abs((sigma_carre_exp-sigma_carre_theorique)/sigma_carre_theorique)*100
+ecart_relatif_sigma_carre
